@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     gMaxFrameIdx = f["box"].shape[0]-1
 
-    matplotlib.use('Qt5Agg')   
+    #matplotlib.use('Qt5Agg')   
     
     fig = plt.figure()
     fig.canvas.mpl_connect('key_press_event', on_key)
