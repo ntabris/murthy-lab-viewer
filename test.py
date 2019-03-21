@@ -7,6 +7,7 @@ import matplotlib.animation as anim
 f = None
 gFrameIdx = 0
 gMaxFrameIdx = 0
+gShowOverlay = True
 
 def fmaxmult(*a):
     r = a[0]
@@ -15,47 +16,56 @@ def fmaxmult(*a):
     return r
 
 def drawFrame(i):
+    global gShowOverlay
+    
     print("plotting %d"%i)
     fig.clear()
     test_frame_over = f["confmaps"][i]
     test_frame_raw = f["box"][i][0]
     plt.imshow(test_frame_raw, cmap=plt.cm.gray)
     
-    # first three channels
-    alpha = fmaxmult(
-        test_frame_over[0],
-        test_frame_over[1],
-        test_frame_over[2]
-        )
-    # alternate: alpha = np.full((256,256),.5)
+    if gShowOverlay:
+        # first three channels
+        alpha = fmaxmult(
+            test_frame_over[0],
+            test_frame_over[1],
+            test_frame_over[2]
+            )
+        # alternate: alpha = np.full((256,256),.5)
 
-    over = np.dstack((
-        test_frame_over[0],
-        test_frame_over[1],
-        test_frame_over[2],
-        alpha
-        ))
+        over = np.dstack((
+            test_frame_over[0],
+            test_frame_over[1],
+            test_frame_over[2],
+            alpha
+            ))
 
-    plt.imshow(over)
+        plt.imshow(over)
     
-     # second three channels
-    alpha = fmaxmult(
-        test_frame_over[3],
-        test_frame_over[4],
-        test_frame_over[5]
-        )
-    # alternate: alpha = np.full((256,256),.5)
+         # second three channels
+        alpha = fmaxmult(
+            test_frame_over[3],
+            test_frame_over[4],
+            test_frame_over[5]
+            )
+        # alternate: alpha = np.full((256,256),.5)
 
-    over = np.dstack((
-        test_frame_over[3],
-        test_frame_over[4],
-        test_frame_over[5],
-        alpha
-        ))
+        over = np.dstack((
+            (test_frame_over[3]+test_frame_over[5])/2,
+            (test_frame_over[3]+test_frame_over[4])/2,
+            (test_frame_over[4]+test_frame_over[5])/2,
+            alpha
+            ))
 
-    plt.imshow(over)
+        plt.imshow(over)
+    
+    ax = plt.gca()
+    ax.axes.get_xaxis().set_visible(False)
+    ax.axes.get_yaxis().set_visible(False)
+    
     plt.title("Frame %d/%d"%(i+1,gMaxFrameIdx+1))
     plt.plot()
+    
     fig.canvas.draw_idle()
 
 def flipFrame(inc):
@@ -68,6 +78,8 @@ def flipFrame(inc):
     drawFrame(gFrameIdx)
 
 def on_key(event):
+    global gShowOverlay
+    
     if event.key == 'right':
         flipFrame(1)
     elif event.key == 'left':
@@ -76,6 +88,9 @@ def on_key(event):
         flipFrame(20)
     elif event.key == 'backspace':
         flipFrame(-20)
+    elif event.key == 'tab':
+        gShowOverlay = not gShowOverlay
+        flipFrame(0)
     else:
         print(event.key)
     
@@ -94,6 +109,7 @@ if __name__ == "__main__":
     #a = anim.FuncAnimation(fig, drawFrame, frames=gMaxFrameIdx, repeat=False)
     
     drawFrame(0)
+    
     plt.show()
     
     
