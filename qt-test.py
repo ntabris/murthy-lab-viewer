@@ -26,9 +26,37 @@ class ms_ImageViewer(QWidget):
 
     def __init__(self,filename):
         super(ms_ImageViewer, self).__init__()
+        
         self.filename = filename
         self.goTo = 0
         self.showOverlay = True
+        self.colors0 = [
+                        (236,57,100),
+                        (71,38,67),
+                        (38,107,160),
+                        (38,91,55),
+                        (238,208,87),
+                        (223,78,54)
+                    ]
+
+        self.colors = [
+                        (248,240,124),
+                        (248,48,60),
+                        (168,56,44),
+                        (242,50,138),
+                        (30,82,182),
+                        (4,150,100)
+                    ]
+
+        self.colors2 = [
+                        (255,0,0),
+                        (0,255,0),
+                        (0,0,255),
+                        (128,128,0),
+                        (128,0,128),
+                        (0,128,128)
+                    ]
+        
         self.loadData()
         self.initUI()
         self.updateUI()
@@ -72,7 +100,8 @@ class ms_ImageViewer(QWidget):
         elif e.key() < 128 and chr(e.key()).isnumeric():
             self.goTo = 10 * self.goTo + int(chr(e.key()))
         else:
-            print(e.key())
+            pass
+            #print(e.key())
         
 
     def updateUI(self):
@@ -111,35 +140,16 @@ class ms_ImageViewer(QWidget):
         img.putalpha(255)
         
         if self.showOverlay:
-            # first three overlay channels
-            alpha = fmaxmult(
-                        test_frame_over[0],
-                        test_frame_over[1],
-                        test_frame_over[2]
-                        )
-            over_arr = np.dstack((
-                        (test_frame_over[0] * 255).astype(np.uint8),
-                        (test_frame_over[1] * 255).astype(np.uint8),
-                        (test_frame_over[2] * 255).astype(np.uint8),
-                        (alpha * 255).astype(np.uint8)
-                        ))
+            for channel in range(test_frame_over.shape[0]):
+                alpha = (test_frame_over[channel] * 255).astype(np.uint8)
+                r = (test_frame_over[channel] * self.colors[channel][0]).astype(np.uint8)
+                g = (test_frame_over[channel] * self.colors[channel][1]).astype(np.uint8)
+                b = (test_frame_over[channel] * self.colors[channel][2]).astype(np.uint8)
+            
+                over_arr = np.dstack((b,g,r,alpha))
         
-            over = Image.fromarray(over_arr)
-            img = Image.alpha_composite(img, over)
-            # second three overlay channels
-            r = (test_frame_over[3]+test_frame_over[5])/2
-            g = (test_frame_over[3]+test_frame_over[4])/2
-            b = (test_frame_over[4]+test_frame_over[5])/2
-            alpha = fmaxmult(r,g,b)
-            over_arr = np.dstack((
-                        (r * 255).astype(np.uint8),
-                        (g * 255).astype(np.uint8),
-                        (b * 255).astype(np.uint8),
-                        (alpha * 255).astype(np.uint8)
-                        ))
-        
-            over = Image.fromarray(over_arr)
-            img = Image.alpha_composite(img, over)
+                over = Image.fromarray(over_arr)
+                img = Image.alpha_composite(img, over)
         
         img_arr = np.array(img)
         
@@ -147,18 +157,10 @@ class ms_ImageViewer(QWidget):
     
     def initUI(self):               
 
-        #self.status = self.statusBar()
-        #self.status.showMessage("Frame n/m")
-
         self.main_layout = QVBoxLayout()
-        #self.main_layout = QVBoxLayout(QWidget(self))
-        
-
 
         self.image_label = QLabel(" ")
-        
-        self.main_layout.addWidget(self.image_label)
-        
+        self.main_layout.addWidget(self.image_label)        
         prevButton = QPushButton('previous', self)
         prevButton.clicked.connect(self.prevFrame)
         self.main_layout.addWidget(prevButton)
@@ -167,9 +169,7 @@ class ms_ImageViewer(QWidget):
         self.main_layout.addWidget(nextButton)
         self.setLayout(self.main_layout)
         
-        
-        
-        self.setGeometry(300, 300, 290, 400)
+        self.setGeometry(300, 300, 290, 300)
         self.show()
         
 
