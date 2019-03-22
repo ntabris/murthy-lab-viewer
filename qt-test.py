@@ -13,15 +13,6 @@ from PySide2.QtWidgets import (QAction, QApplication, QPushButton, QVBoxLayout,
                                QMainWindow, QSizePolicy, QWidget, QLabel)
 
 
-def fmaxmult(*a):
-    r = a[0]
-    for i in range(1,len(a)):
-        r = np.fmax(r,a[i])
-    return r
-
-
-
-
 class ms_ImageViewer(QWidget):
 
     def __init__(self,filename):
@@ -102,9 +93,8 @@ class ms_ImageViewer(QWidget):
         else:
             pass
             #print(e.key())
-        
-
-    def updateUI(self):
+    
+    def updateUI(self):        
         self.image_label.setPixmap(self.getFramePixmap(self.frameIdx))
         self.setWindowTitle("%s... [%d/%d]"%
             (self.filename[:20],self.frameIdx,self.frameMax)
@@ -115,6 +105,7 @@ class ms_ImageViewer(QWidget):
         self.imgH, self.imgW = self.file["box"][0][0].shape
         self.frameIdx = 0
         self.frameMax = self.file["box"].shape[0]-1
+        self.frameCache = [None] * self.frameMax
         
     def getFramePixmap(self,i):
         image = QtGui.QImage(
@@ -122,12 +113,14 @@ class ms_ImageViewer(QWidget):
                         self.imgH, self.imgW,
                         QtGui.QImage.Format_ARGB32
                         )
-        
         return QtGui.QPixmap.fromImage(image)
         
     def getFrame(self,i):
-        #i = 47
-
+        if self.frameCache[i] is None:
+            self.frameCache[i] = self.getUncachedFrame(i)
+        return self.frameCache[i]
+        
+    def getUncachedFrame(self,i):
         test_frame_over = self.file["confmaps"][i]
         test_frame_raw = self.file["box"][i][0]
 
@@ -152,7 +145,6 @@ class ms_ImageViewer(QWidget):
                 img = Image.alpha_composite(img, over)
         
         img_arr = np.array(img)
-        
         return img_arr
     
     def initUI(self):               
