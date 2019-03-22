@@ -140,7 +140,7 @@ class ms_ImageViewer(QWidget):
         img.putalpha(255)
         
         if self.showOverlay:
-            for channel in range(test_frame_over.shape[0]):
+            for channel in range(min(test_frame_over.shape[0],len(self.colors))):
                 alpha = (test_frame_over[channel] * 255).astype(np.uint8)
                 r = (test_frame_over[channel] * self.colors[channel][0]).astype(np.uint8)
                 g = (test_frame_over[channel] * self.colors[channel][1]).astype(np.uint8)
