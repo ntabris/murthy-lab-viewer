@@ -99,13 +99,16 @@ class ms_ImageViewer(QWidget):
         self.setWindowTitle("%s... [%d/%d]"%
             (self.filename[:20],self.frameIdx,self.frameMax)
             )
+        # preload cache for adjacent frames
+        self.getFrame(self.frameIdx-1)
+        self.getFrame(self.frameIdx+1)
 
     def loadData(self):
         self.file = h5py.File(self.filename, "r")
         self.imgH, self.imgW = self.file["box"][0][0].shape
         self.frameIdx = 0
         self.frameMax = self.file["box"].shape[0]-1
-        self.frameCache = [None] * self.frameMax
+        self.frameCache = [None] * (self.frameMax+1)
         
     def getFramePixmap(self,i):
         image = QtGui.QImage(
@@ -116,6 +119,9 @@ class ms_ImageViewer(QWidget):
         return QtGui.QPixmap.fromImage(image)
         
     def getFrame(self,i):
+        if i < 0 or i > self.frameMax:
+            return None
+            
         if self.frameCache[i] is None:
             self.frameCache[i] = self.getUncachedFrame(i)
         return self.frameCache[i]
