@@ -1,6 +1,4 @@
 import sys
-import argparse
-import pandas as pd
 import numpy as np
 import h5py
 
@@ -9,15 +7,17 @@ from PIL import Image
 from PySide2 import QtGui, QtCore
 from PySide2.QtCore import Qt, Slot, QRect
 from PySide2.QtGui import QPixmap, QImage
-from PySide2.QtWidgets import (QAction, QApplication, QPushButton, QVBoxLayout,
-                               QMainWindow, QSizePolicy, QWidget, QLabel)
+from PySide2.QtWidgets import (QAction, QApplication, QPushButton, QVBoxLayout, 
+                               QMainWindow, QSizePolicy, QWidget, QLabel, QGraphicsView,
+                               QGraphicsScene)
 
 
-class ms_ImageViewer(QWidget):
+class ms_ImageViewer(QGraphicsView):
 
     def __init__(self,filename):
         super(ms_ImageViewer, self).__init__()
         
+        self.doCaching = False # caching images doesn't seem to improve speed
         self.filename = filename
         self.goTo = 0
         self.showOverlay = True
@@ -63,36 +63,37 @@ class ms_ImageViewer(QWidget):
             self.updateUI()
 
     def keyPressEvent(self, e):
-        # left arrow
+        # left arrow goes to previous frame
         if e.key() == 16777234:
             self.prevFrame()
-        # right arrow
+        # right arrow goes to next frame
         elif e.key() == 16777236:
             self.nextFrame()
-        # up arrow
+        # up arrow goes to first frame
         elif e.key() == 16777235:
             self.frameIdx = 0
             self.updateUI()
-        # down arrow
+        # down arrow goes to last frame
         elif e.key() == 16777237:
             self.frameIdx = self.frameMax
             self.updateUI()
-        # tab key
+        # tab key toggles overlay
         elif e.key() == 16777217:
             self.showOverlay = not self.showOverlay
+            self.clearCache()
             self.updateUI()
-        # enter key
+        # enter key goes to number entered
         elif e.key() == 16777220:
             if self.goTo >= 0 and self.goTo <= self.frameMax:
                 self.frameIdx = self.goTo
                 self.updateUI()
             self.goTo = 0
-        # number keys
+        # number keys: store digits to build number of goto frame
         elif e.key() < 128 and chr(e.key()).isnumeric():
             self.goTo = 10 * self.goTo + int(chr(e.key()))
         else:
+            print(e.key())
             pass
-            #print(e.key())
     
     def updateUI(self):        
         self.image_label.setPixmap(self.getFramePixmap(self.frameIdx))
@@ -108,6 +109,9 @@ class ms_ImageViewer(QWidget):
         self.imgH, self.imgW = self.file["box"][0][0].shape
         self.frameIdx = 0
         self.frameMax = self.file["box"].shape[0]-1
+        self.clearCache()
+        
+    def clearCache(self):
         self.frameCache = [None] * (self.frameMax+1)
         
     def getFramePixmap(self,i):
@@ -121,9 +125,14 @@ class ms_ImageViewer(QWidget):
     def getFrame(self,i):
         if i < 0 or i > self.frameMax:
             return None
-            
+        # if caching is turned off, just return frame
+        if not self.doCaching:
+            return self.getUncachedFrame(i)
+        
+        # otherwise, put frame into cache if it isn't
         if self.frameCache[i] is None:
             self.frameCache[i] = self.getUncachedFrame(i)
+        # return cached frame
         return self.frameCache[i]
         
     def getUncachedFrame(self,i):
@@ -158,7 +167,8 @@ class ms_ImageViewer(QWidget):
         self.main_layout = QVBoxLayout()
 
         self.image_label = QLabel(" ")
-        self.main_layout.addWidget(self.image_label)        
+        self.main_layout.addWidget(self.image_label)
+        
         prevButton = QPushButton('previous', self)
         prevButton.clicked.connect(self.prevFrame)
         self.main_layout.addWidget(prevButton)
@@ -168,6 +178,7 @@ class ms_ImageViewer(QWidget):
         self.setLayout(self.main_layout)
         
         self.setGeometry(300, 300, 290, 300)
+
         self.show()
         
 
