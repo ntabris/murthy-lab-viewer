@@ -6,8 +6,7 @@ from PySide2 import QtGui, QtCore
 from PySide2.QtCore import Qt, Slot, QRect
 from PySide2.QtGui import QPixmap, QImage
 from PySide2.QtWidgets import (QAction, QApplication, QPushButton, QVBoxLayout, 
-                               QMainWindow, QSizePolicy, QWidget, QLabel, QGraphicsView,
-                               QGraphicsScene, QGraphicsPixmapItem)
+                               QGraphicsView, QGraphicsScene, QGraphicsPixmapItem)
 
 
 
