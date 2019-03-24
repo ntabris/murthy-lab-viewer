@@ -125,10 +125,14 @@ class ms_ImageViewer(QGraphicsView):
     
     
 if __name__ == "__main__":
-
     # Qt Application
     app = QApplication(sys.argv)
-
-    ex = ms_ImageViewer("training.scale=0.25,sigma=10.h5")
+    
+    # take filename from command-line argument, or use default if none passed in
+    filename = "training.scale=0.25,sigma=10.h5"
+    if len(sys.argv) > 1:
+        filename = sys.argv[-1]
+    # show image viewer
+    ex = ms_ImageViewer(filename)
 
     sys.exit(app.exec_())
