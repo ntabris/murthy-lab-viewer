@@ -66,3 +66,34 @@ class ImageFile():
         
         img_arr = np.array(img)
         return img_arr
+        
+    def findCenterOfMass(self, arr, a=0, b=-1):
+        if type(arr) is int:
+            over_flat = self.file["confmaps"][arr].sum(axis=0)
+            return self.findCenterOfMass(over_flat,0,-1)
+    
+        # if given two dimensional array, flatten and calculate along each axis
+        if len(arr.shape) == 2:
+            return (
+                self.findCenterOfMass(arr.sum(axis=0), a, b), # x: left
+                self.findCenterOfMass(arr.sum(axis=1), a, b)  # y: down
+                )
+    
+        if b == -1:
+            b = len(arr) - 1
+        
+        cut = (a + b)//2
+        left = arr[:cut].sum().astype(np.float64)
+        right = arr[cut:].sum().astype(np.float64)
+        
+        if (b - a) < 4:
+            return cut
+        elif left < right:
+            return self.findCenterOfMass(arr, cut, b)
+        else:
+            return self.findCenterOfMass(arr, a, cut)
+        
+if __name__ == "__main__":
+    im = ImageFile("training.scale=0.25,sigma=10.h5")
+    
+    print(im.findCenterOfMass(0))
