@@ -2,6 +2,9 @@
 
 Displays frame images from h5 file. Depends on PySide2 (Qt), PIL (Pillow), h5py, and numpy.
 
+Usage:
+    python qtviewer.py <filename>
+
 ## Key commands
 
 - up/down/left/right arrow: go to first/last/previous/next frame
