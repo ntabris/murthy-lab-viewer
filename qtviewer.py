@@ -7,7 +7,7 @@ from PySide2.QtCore import Qt, Slot, QRect
 from PySide2.QtGui import QPixmap, QImage
 from PySide2.QtWidgets import (QAction, QApplication, QPushButton, QVBoxLayout, 
                                QMainWindow, QSizePolicy, QWidget, QLabel, QGraphicsView,
-                               QGraphicsScene)
+                               QGraphicsScene, QGraphicsPixmapItem)
 
 
 
@@ -20,6 +20,7 @@ class ms_ImageViewer(QGraphicsView):
         self.filename = filename
         self.goTo = 0
         self.frameIdx = 0
+        self.doZoom = False
         self.showOverlay = True
         
         self.imageFile = ImageFile(self.filename)
@@ -61,15 +62,30 @@ class ms_ImageViewer(QGraphicsView):
                 self.frameIdx = self.goTo
                 self.updateUI()
             self.goTo = 0
-        # number keys: store digits to build number of goto frame
-        elif e.key() < 128 and chr(e.key()).isnumeric():
-            self.goTo = 10 * self.goTo + int(chr(e.key()))
+        # ascii characters
+        elif e.key() < 128:
+            # number keys: store digits to build number of goto frame
+            if chr(e.key()).isnumeric():
+                self.goTo = 10 * self.goTo + int(chr(e.key()))
+            # z toggles zoom
+            elif chr(e.key()) == 'Z':
+                self.doZoom = not self.doZoom
+                self.updateUI()
         else:
-            print(e.key())
+            print("key:",e.key())
             pass
     
     def updateUI(self):        
-        self.image_label.setPixmap(self.getFramePixmap(self.frameIdx))
+        self.pixmap.setPixmap(self.getFramePixmap(self.frameIdx))
+        outlineBox = self.imageFile.box(self.imageFile.findCenterOfMass(self.frameIdx))
+        if self.boxRect: self.boxRect.setRect(*outlineBox)
+        #self.translate(-outlineBox[0],-outlineBox[1])
+        if self.doZoom:
+            self.resetTransform()
+            self.scale(2,2)
+            self.centerOn(*self.imageFile.findCenterOfMass(self.frameIdx))
+        else:
+            self.resetTransform()
         self.setWindowTitle("%s... [%d/%d]"%
             (self.filename[:20],self.frameIdx,self.imageFile.frameMax))
     
@@ -88,18 +104,32 @@ class ms_ImageViewer(QGraphicsView):
 
         self.main_layout = QVBoxLayout()
 
-        self.image_label = QLabel(" ")
-        self.main_layout.addWidget(self.image_label)
+        self.scene = QGraphicsScene(self.main_layout)
+        self.pixmap = QGraphicsPixmapItem()
+        self.scene.addItem(self.pixmap)
         
-        prevButton = QPushButton('previous', self)
-        prevButton.clicked.connect(self.prevFrame)
-        self.main_layout.addWidget(prevButton)
-        nextButton = QPushButton('next', self)
-        nextButton.clicked.connect(self.nextFrame)
-        self.main_layout.addWidget(nextButton)
-        self.setLayout(self.main_layout)
+        self.boxRect = None
+        # option to draw box around overlay spots
+        if False:
+            outlineBox = self.imageFile.box(
+                self.imageFile.findCenterOfMass(self.frameIdx)
+                )
+            self.scene.addRect(QRect(*outlineBox),pen=QtGui.QPen(QtCore.Qt.blue, 1))
+            self.boxRect = self.scene.items()[0] # not the best way to get rect
         
-        self.setGeometry(300, 300, 290, 300)
+        self.setScene(self.scene)
+        
+        #self.main_layout.addWidget(self.scene)
+        
+#         prevButton = QPushButton('previous', self)
+#         prevButton.clicked.connect(self.prevFrame)
+#         self.main_layout.addWidget(prevButton)
+#         nextButton = QPushButton('next', self)
+#         nextButton.clicked.connect(self.nextFrame)
+#         self.main_layout.addWidget(nextButton)
+#         self.setLayout(self.main_layout)
+        
+        self.setGeometry(300, 300, self.imageFile.imgH, self.imageFile.imgW)
 
         self.show()
         
