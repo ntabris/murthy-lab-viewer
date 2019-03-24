@@ -69,11 +69,12 @@ class ImageFile():
         return img_arr
 
     def findCenterOfMass(self, arr, a=0, b=-1):
+        # if given index of frame, call for frame overlay matrix
         if isinstance(arr, int):
             over_flat = self.file["confmaps"][arr].sum(axis=0)
             return self.findCenterOfMass(over_flat, 0, -1)
 
-        # if given two dimensional array, flatten and calculate along each axis
+        # if given two dimensional array, call for each axis
         if len(arr.shape) == 2:
             return (
                 self.findCenterOfMass(arr.sum(axis=0), a, b), # x: left
@@ -94,14 +95,14 @@ class ImageFile():
         else:
             return self.findCenterOfMass(arr, a, cut)
 
-    def box(self, center, offset=40):
-        x = max(0, center[0]-offset)
-        x = min(x, self.imgW- offset*2)
+    def box(self, center, offset=50):
+        x = max(1, center[0]-offset)
+        x = min(x, self.imgW-1 - offset*2)
 
-        y = max(0, center[1]-offset)
-        y = min(y, self.imgH - offset*2)
+        y = max(1, center[1]-offset)
+        y = min(y, self.imgH-1 - offset*2)
 
-        return x, y, x + offset*2, y + offset*2
+        return x, y, offset*2, offset*2
 
 if __name__ == "__main__":
     im = ImageFile("training.scale=0.25,sigma=10.h5")
