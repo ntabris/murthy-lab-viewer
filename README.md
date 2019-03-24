@@ -1,4 +1,4 @@
-# Viewer for Murphy Lab h5 files
+# Viewer for Murthy Lab h5 files
 
 Displays frame images from h5 file. Depends on PySide2 (Qt), PIL (Pillow), h5py, and numpy.
 
