@@ -93,7 +93,17 @@ class ImageFile():
             return self.findCenterOfMass(arr, cut, b)
         else:
             return self.findCenterOfMass(arr, a, cut)
+    
+    def box(self, center, offset=40):
+        x = max(0, center[0]-offset)
+        x = min(x, self.imgW- offset*2)
         
+        y = max(0, center[1]-offset)
+        y = min(y, self.imgH - offset*2)
+        
+        return x, y, x + offset*2, y + offset*2
+    
+    
 if __name__ == "__main__":
     im = ImageFile("training.scale=0.25,sigma=10.h5")
     
