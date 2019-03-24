@@ -12,23 +12,11 @@ from PySide2.QtWidgets import (QAction, QApplication, QPushButton, QVBoxLayout,
                                QGraphicsScene)
 
 
-class ms_ImageViewer(QGraphicsView):
-
+class ImageFile():
     def __init__(self,filename):
-        super(ms_ImageViewer, self).__init__()
-        
         self.doCaching = False # caching images doesn't seem to improve speed
         self.filename = filename
-        self.goTo = 0
-        self.showOverlay = True
-        self.colors0 = [
-                        (236,57,100),
-                        (71,38,67),
-                        (38,107,160),
-                        (38,91,55),
-                        (238,208,87),
-                        (223,78,54)
-                    ]
+        self.loadData()
 
         self.colors = [
                         (248,240,124),
@@ -39,16 +27,66 @@ class ms_ImageViewer(QGraphicsView):
                         (4,150,100)
                     ]
 
-        self.colors2 = [
-                        (255,0,0),
-                        (0,255,0),
-                        (0,0,255),
-                        (128,128,0),
-                        (128,0,128),
-                        (0,128,128)
-                    ]
+    def loadData(self):
+        self.file = h5py.File(self.filename, "r")
+        self.imgH, self.imgW = self.file["box"][0][0].shape
+        self.frameMax = self.file["box"].shape[0]-1
+        self.clearCache()
         
-        self.loadData()
+    def clearCache(self):
+        self.frameCache = [None] * (self.frameMax+1)
+
+    def getFrame(self,i,showOverlay = True):
+        if i < 0 or i > self.frameMax:
+            return None
+        # if caching is turned off, just return frame
+        if not self.doCaching:
+            return self.getUncachedFrame(i,showOverlay)
+        
+        # otherwise, put frame into cache if it isn't
+        if self.frameCache[i] is None:
+            self.frameCache[i] = self.getUncachedFrame(i,showOverlay)
+        # return cached frame
+        return self.frameCache[i]
+        
+    def getUncachedFrame(self,i,showOverlay):
+        test_frame_over = self.file["confmaps"][i]
+        test_frame_raw = self.file["box"][i][0]
+
+        under_arr = np.dstack((
+                    (test_frame_raw).astype(np.uint8),
+                    (test_frame_raw).astype(np.uint8),
+                    (test_frame_raw).astype(np.uint8)
+                    ))
+        img = Image.fromarray(under_arr)
+        img.putalpha(255)
+        
+        if showOverlay:
+            for channel in range(min(test_frame_over.shape[0],len(self.colors))):
+                alpha = (test_frame_over[channel] * 255).astype(np.uint8)
+                r = (test_frame_over[channel] * self.colors[channel][0]).astype(np.uint8)
+                g = (test_frame_over[channel] * self.colors[channel][1]).astype(np.uint8)
+                b = (test_frame_over[channel] * self.colors[channel][2]).astype(np.uint8)
+            
+                over_arr = np.dstack((b,g,r,alpha))
+        
+                over = Image.fromarray(over_arr)
+                img = Image.alpha_composite(img, over)
+        
+        img_arr = np.array(img)
+        return img_arr
+
+class ms_ImageViewer(QGraphicsView):
+
+    def __init__(self,filename):
+        super(ms_ImageViewer, self).__init__()
+        
+        self.filename = filename
+        self.goTo = 0
+        self.frameIdx = 0
+        self.showOverlay = True
+        
+        self.imageFile = ImageFile(self.filename)
         self.initUI()
         self.updateUI()
 
@@ -58,7 +96,7 @@ class ms_ImageViewer(QGraphicsView):
             self.updateUI()
     
     def nextFrame(self):
-        if self.frameIdx < self.frameMax:
+        if self.frameIdx < self.imageFile.frameMax:
             self.frameIdx += 1
             self.updateUI()
 
@@ -75,16 +113,15 @@ class ms_ImageViewer(QGraphicsView):
             self.updateUI()
         # down arrow goes to last frame
         elif e.key() == 16777237:
-            self.frameIdx = self.frameMax
+            self.frameIdx = self.imageFile.frameMax
             self.updateUI()
         # tab key toggles overlay
         elif e.key() == 16777217:
             self.showOverlay = not self.showOverlay
-            self.clearCache()
             self.updateUI()
         # enter key goes to number entered
         elif e.key() == 16777220:
-            if self.goTo >= 0 and self.goTo <= self.frameMax:
+            if self.goTo >= 0 and self.goTo <= self.imageFile.frameMax:
                 self.frameIdx = self.goTo
                 self.updateUI()
             self.goTo = 0
@@ -98,69 +135,18 @@ class ms_ImageViewer(QGraphicsView):
     def updateUI(self):        
         self.image_label.setPixmap(self.getFramePixmap(self.frameIdx))
         self.setWindowTitle("%s... [%d/%d]"%
-            (self.filename[:20],self.frameIdx,self.frameMax)
-            )
-        # preload cache for adjacent frames
-        self.getFrame(self.frameIdx-1)
-        self.getFrame(self.frameIdx+1)
-
-    def loadData(self):
-        self.file = h5py.File(self.filename, "r")
-        self.imgH, self.imgW = self.file["box"][0][0].shape
-        self.frameIdx = 0
-        self.frameMax = self.file["box"].shape[0]-1
-        self.clearCache()
-        
-    def clearCache(self):
-        self.frameCache = [None] * (self.frameMax+1)
+            (self.filename[:20],self.frameIdx,self.imageFile.frameMax))
+    
         
     def getFramePixmap(self,i):
         image = QtGui.QImage(
-                        self.getFrame(i),
-                        self.imgH, self.imgW,
+                        self.imageFile.getFrame(i,self.showOverlay),
+                        self.imageFile.imgH, self.imageFile.imgW,
                         QtGui.QImage.Format_ARGB32
                         )
         return QtGui.QPixmap.fromImage(image)
         
-    def getFrame(self,i):
-        if i < 0 or i > self.frameMax:
-            return None
-        # if caching is turned off, just return frame
-        if not self.doCaching:
-            return self.getUncachedFrame(i)
-        
-        # otherwise, put frame into cache if it isn't
-        if self.frameCache[i] is None:
-            self.frameCache[i] = self.getUncachedFrame(i)
-        # return cached frame
-        return self.frameCache[i]
-        
-    def getUncachedFrame(self,i):
-        test_frame_over = self.file["confmaps"][i]
-        test_frame_raw = self.file["box"][i][0]
 
-        under_arr = np.dstack((
-                    (test_frame_raw).astype(np.uint8),
-                    (test_frame_raw).astype(np.uint8),
-                    (test_frame_raw).astype(np.uint8)
-                    ))
-        img = Image.fromarray(under_arr)
-        img.putalpha(255)
-        
-        if self.showOverlay:
-            for channel in range(min(test_frame_over.shape[0],len(self.colors))):
-                alpha = (test_frame_over[channel] * 255).astype(np.uint8)
-                r = (test_frame_over[channel] * self.colors[channel][0]).astype(np.uint8)
-                g = (test_frame_over[channel] * self.colors[channel][1]).astype(np.uint8)
-                b = (test_frame_over[channel] * self.colors[channel][2]).astype(np.uint8)
-            
-                over_arr = np.dstack((b,g,r,alpha))
-        
-                over = Image.fromarray(over_arr)
-                img = Image.alpha_composite(img, over)
-        
-        img_arr = np.array(img)
-        return img_arr
     
     def initUI(self):               
 
