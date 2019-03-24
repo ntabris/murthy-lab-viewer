@@ -8,9 +8,6 @@ from PySide2.QtGui import QPixmap, QImage
 from PySide2.QtWidgets import (QAction, QApplication, QPushButton, QVBoxLayout, 
                                QGraphicsView, QGraphicsScene, QGraphicsPixmapItem)
 
-
-
-
 class ms_ImageViewer(QGraphicsView):
 
     def __init__(self,filename):
@@ -25,7 +22,7 @@ class ms_ImageViewer(QGraphicsView):
         self.imageFile = ImageFile(self.filename)
         self.initUI()
         self.updateUI()
-
+    
     def prevFrame(self):
         if self.frameIdx > 0:
             self.frameIdx -= 1
@@ -35,7 +32,7 @@ class ms_ImageViewer(QGraphicsView):
         if self.frameIdx < self.imageFile.frameMax:
             self.frameIdx += 1
             self.updateUI()
-
+    
     def keyPressEvent(self, e):
         # left arrow goes to previous frame
         if e.key() == 16777234:
@@ -71,10 +68,10 @@ class ms_ImageViewer(QGraphicsView):
                 self.doZoom = not self.doZoom
                 self.updateUI()
         else:
-            print("key:",e.key())
+            #print("key:",e.key())
             pass
     
-    def updateUI(self):        
+    def updateUI(self):
         self.pixmap.setPixmap(self.getFramePixmap(self.frameIdx))
         outlineBox = self.imageFile.box(self.imageFile.findCenterOfMass(self.frameIdx))
         if self.boxRect: self.boxRect.setRect(*outlineBox)
@@ -88,19 +85,15 @@ class ms_ImageViewer(QGraphicsView):
         self.setWindowTitle("%s... [%d/%d]"%
             (self.filename[:20],self.frameIdx,self.imageFile.frameMax))
     
-        
     def getFramePixmap(self,i):
         image = QtGui.QImage(
-                        self.imageFile.getFrame(i,self.showOverlay),
-                        self.imageFile.imgH, self.imageFile.imgW,
-                        QtGui.QImage.Format_ARGB32
-                        )
+            self.imageFile.getFrame(i,self.showOverlay),
+            self.imageFile.imgH, self.imageFile.imgW,
+            QtGui.QImage.Format_ARGB32
+            )
         return QtGui.QPixmap.fromImage(image)
-        
-
     
-    def initUI(self):               
-
+    def initUI(self):
         self.main_layout = QVBoxLayout()
 
         self.scene = QGraphicsScene(self.main_layout)
@@ -118,8 +111,6 @@ class ms_ImageViewer(QGraphicsView):
         
         self.setScene(self.scene)
         
-        #self.main_layout.addWidget(self.scene)
-        
 #         prevButton = QPushButton('previous', self)
 #         prevButton.clicked.connect(self.prevFrame)
 #         self.main_layout.addWidget(prevButton)
@@ -131,9 +122,8 @@ class ms_ImageViewer(QGraphicsView):
         self.setGeometry(300, 300, self.imageFile.imgH, self.imageFile.imgW)
 
         self.show()
-        
-
-
+    
+    
 if __name__ == "__main__":
 
     # Qt Application
