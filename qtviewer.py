@@ -9,10 +9,33 @@ from PySide2.QtWidgets import (QAction, QApplication, QPushButton, QHBoxLayout,
                                QMainWindow, QDockWidget, QWidget,
                                QGraphicsView, QGraphicsScene, QGraphicsPixmapItem)
 
-class ms_ImageViewer(QMainWindow):
+class MyGraphicsView(QGraphicsView):
+    
+    def __init__(self, parent):
+        super(MyGraphicsView, self).__init__()
+        self.parent = parent
+        
+    def keyPressEvent(self, e):
+        # left arrow goes to previous frame
+        if e.key() == 16777234:
+            self.parent.prevFrame()
+        # right arrow goes to next frame
+        elif e.key() == 16777236:
+            self.parent.nextFrame()
+        # up arrow goes to first frame
+        elif e.key() == 16777235:
+            self.parent.firstFrame()
+        # down arrow goes to last frame
+        elif e.key() == 16777237:
+            self.parent.lastFrame()
+        # pass event to parent
+        else:
+            self.parent.keyPressEvent(e)
+
+class MyImageViewer(QMainWindow):
 
     def __init__(self,filename):
-        super(ms_ImageViewer, self).__init__()
+        super(MyImageViewer, self).__init__()
         
         self.filename = filename
         self.goTo = 0
@@ -52,20 +75,8 @@ class ms_ImageViewer(QMainWindow):
         self.updateUI(updateCenter=False)
     
     def keyPressEvent(self, e):
-        # left arrow (or J) goes to previous frame
-        if e.key() == 16777234 or e.key() == 74:
-            self.prevFrame()
-        # right arrow (or K) goes to next frame
-        elif e.key() == 16777236 or e.key() == 75:
-            self.nextFrame()
-        # up arrow (or H) goes to first frame
-        elif e.key() == 16777235 or e.key() == 72:
-            self.firstFrame()
-        # down arrow (or L) goes to last frame
-        elif e.key() == 16777237 or e.key() == 76:
-            self.lastFrame()
         # tab key toggles overlay
-        elif e.key() == 16777217:
+        if e.key() == 16777217:
             self.toggleOverlay()
         # enter key goes to number entered
         elif e.key() == 16777220:
@@ -122,7 +133,7 @@ class ms_ImageViewer(QMainWindow):
             self.scene.addRect(QRect(*outlineBox),pen=QtGui.QPen(QtCore.Qt.blue, 1))
             self.boxRect = self.scene.items()[0] # not the best way to get rect
         
-        self.view = QGraphicsView()
+        self.view = MyGraphicsView(self)
         self.view.setDragMode(QGraphicsView.ScrollHandDrag)
         self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -182,6 +193,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         filename = sys.argv[-1]
     # show image viewer
-    ex = ms_ImageViewer(filename)
+    ex = MyImageViewer(filename)
 
     sys.exit(app.exec_())
