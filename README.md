@@ -8,7 +8,7 @@ Displays frame images from h5 file. Depends on PySide2 (Qt), PIL (Pillow), h5py,
 
 ## Key commands
 
-- up/down/left/right arrow: go to first/last/previous/next frame
+- h/j/k/l: go to first/previous/next/last frame
 - 123 + enter: go to frame number 123
 - tab: toggle overlay
 - z: toggle zoom
