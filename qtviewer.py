@@ -9,6 +9,7 @@ from PySide2.QtWidgets import (QAction, QApplication, QPushButton, QHBoxLayout,
                                QMainWindow, QDockWidget, QWidget,
                                QGraphicsView, QGraphicsScene, QGraphicsPixmapItem)
 
+
 class MyGraphicsView(QGraphicsView):
     
     def __init__(self, parent):
@@ -31,6 +32,7 @@ class MyGraphicsView(QGraphicsView):
         # pass event to parent
         else:
             self.parent.keyPressEvent(e)
+
 
 class MyImageViewer(QMainWindow):
 
@@ -100,7 +102,6 @@ class MyImageViewer(QMainWindow):
         self.pixmap.setPixmap(self.getFramePixmap(self.frameIdx))
         outlineBox = self.imageFile.box(self.imageFile.findCenterOfMass(self.frameIdx))
         if self.boxRect: self.boxRect.setRect(*outlineBox)
-        #self.translate(-outlineBox[0],-outlineBox[1])
         if self.doZoom:
             self.view.resetTransform()
             self.view.scale(2,2)
@@ -130,15 +131,16 @@ class MyImageViewer(QMainWindow):
             outlineBox = self.imageFile.box(
                 self.imageFile.findCenterOfMass(self.frameIdx)
                 )
-            self.scene.addRect(QRect(*outlineBox),pen=QtGui.QPen(QtCore.Qt.blue, 1))
+            self.scene.addRect(
+                QRect(*outlineBox),
+                pen=QtGui.QPen(QtCore.Qt.blue, 1)
+                )
             self.boxRect = self.scene.items()[0] # not the best way to get rect
         
         self.view = MyGraphicsView(self)
         self.view.setDragMode(QGraphicsView.ScrollHandDrag)
         self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        #self.view.setFixedSize(256,256) # ???
-        #self.view.setGeometry(20, 20, self.imageFile.imgW, self.imageFile.imgH)
         self.view.setScene(self.scene)
         
         self.setCentralWidget(self.view)
@@ -149,27 +151,27 @@ class MyImageViewer(QMainWindow):
         
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(0,0,0,0)
-        # first frame
+        # first frame button
         firstButton = QPushButton('<<', self)
         firstButton.clicked.connect(self.firstFrame)
         main_layout.addWidget(firstButton)
-        # previous frame
+        # previous frame button
         prevButton = QPushButton('<', self)
         prevButton.clicked.connect(self.prevFrame)
         main_layout.addWidget(prevButton)
-        # next frame
+        # next frame button
         nextButton = QPushButton('>', self)
         nextButton.clicked.connect(self.nextFrame)
         main_layout.addWidget(nextButton)
-        # last frame
+        # last frame button
         lastButton = QPushButton('>>', self)
         lastButton.clicked.connect(self.lastFrame)
         main_layout.addWidget(lastButton)
-        # zoom
+        # zoom button
         zoomButton = QPushButton('zoom', self)
         zoomButton.clicked.connect(self.toggleZoom)
         main_layout.addWidget(zoomButton)
-        # zoom
+        # zoom button
         overlayButton = QPushButton('color', self)
         overlayButton.clicked.connect(self.toggleOverlay)
         main_layout.addWidget(overlayButton)
@@ -178,9 +180,10 @@ class MyImageViewer(QMainWindow):
         dockContainerWidget.setLayout(main_layout)
         dockContainerWidget.setGeometry(0,0,self.imageFile.imgW,20)
         
-        self.setFixedSize(self.imageFile.imgW, self.imageFile.imgH+dockContainerWidget.height())
-        #self.setGeometry(320, 320, self.imageFile.imgW, self.imageFile.imgH+dockContainerWidget.height())
-
+        self.setFixedSize(
+            self.imageFile.imgW,
+            self.imageFile.imgH+dockContainerWidget.height()
+        )
         self.show()
     
     
