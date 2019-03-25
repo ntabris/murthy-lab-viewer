@@ -167,7 +167,8 @@ class ms_ImageViewer(QMainWindow):
         dockContainerWidget.setLayout(main_layout)
         dockContainerWidget.setGeometry(0,0,self.imageFile.imgW,20)
         
-        self.setGeometry(320, 320, self.imageFile.imgW, self.imageFile.imgH+dockContainerWidget.height())
+        self.setFixedSize(self.imageFile.imgW, self.imageFile.imgH+dockContainerWidget.height())
+        #self.setGeometry(320, 320, self.imageFile.imgW, self.imageFile.imgH+dockContainerWidget.height())
 
         self.show()
     
