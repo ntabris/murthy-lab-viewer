@@ -4,7 +4,7 @@ Displays frame images from h5 file. Depends on PySide2 (Qt), PIL (Pillow), h5py,
 
 ## Usage
 
-    python qtviewer.py <filename>
+    python qtviewer.py <file>
 
 ## Key commands
 
